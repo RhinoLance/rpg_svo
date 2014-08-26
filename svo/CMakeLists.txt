@@ -3,7 +3,7 @@
 
 SET(TRACE TRUE)
 SET(HAVE_G2O FALSE) 
-SET(USE_ROS TRUE) # Set FALSE if you want to build this package without Catkin
+SET(USE_ROS FALSE) # Set FALSE if you want to build this package without Catkin
 SET(DEBUG_OUTPUT FALSE) # Only relevant if build without ROS
 
 ################################################################################
@@ -147,4 +147,7 @@ ADD_EXECUTABLE(test_sparse_img_align test/test_sparse_img_align.cpp)
 TARGET_LINK_LIBRARIES(test_sparse_img_align svo)
 
 ADD_EXECUTABLE(test_pose_optimizer test/test_pose_optimizer.cpp)
-TARGET_LINK_LIBRARIES(test_pose_optimizer svo) 
+TARGET_LINK_LIBRARIES(test_pose_optimizer svo)
+
+ADD_EXECUTABLE(test_sample_rate test/test_sample_rate.cpp)
+TARGET_LINK_LIBRARIES(test_sample_rate svo)
