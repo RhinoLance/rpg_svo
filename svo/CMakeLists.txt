@@ -151,3 +151,6 @@ TARGET_LINK_LIBRARIES(test_pose_optimizer svo)
 
 ADD_EXECUTABLE(test_sample_rate test/test_sample_rate.cpp)
 TARGET_LINK_LIBRARIES(test_sample_rate svo)
+
+ADD_EXECUTABLE(test_footprints test/test_footprints.cpp)
+TARGET_LINK_LIBRARIES(test_footprints svo)

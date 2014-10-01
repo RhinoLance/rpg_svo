@@ -71,7 +71,21 @@ public:
 
 BenchmarkNode::BenchmarkNode()
 {
-  cam_ = new vk::PinholeCamera(752, 480, 315.5, 315.5, 376.0, 240.0);
+  /*
+  //Test office data
+  cam_ = new vk::PinholeCamera(
+      752, 480,         //image width, height
+      315.5, 315.5,     //focal length
+      376.0, 240.0      //principal point
+    );
+  */
+
+  //UniFarm
+  cam_ = new vk::PinholeCamera(
+      639, 480,       	//image width, height
+      315.5, 315.5,     //focal length
+      376.0, 240.0      //principal point
+    );
   vo_ = new svo::FrameHandlerMono(cam_);
   vo_->start();
 }
@@ -102,11 +116,11 @@ void BenchmarkNode::runFromFolder(std::string folderPath)
 	cI++;  
   
 	// load image
-	std::cout << "Loading " << cI << " " << *it;    
+	//std::cout << "Loading " << cI << " " << *it;    
 	
 	cv::Mat img(cv::imread(folderPath + "/" + string(*it), 0));
     if( img.empty()) {
-		std::cout << "... empty, skipping\n";		
+		//std::cout << "... empty, skipping\n";		
 		continue;
 	}
 

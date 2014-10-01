@@ -18,6 +18,8 @@
 #include <svo/frame_handler_mono.h>
 #include <svo/map.h>
 #include <svo/frame.h>
+#include <svo/feature.h>
+#include <svo/point.h>
 #include <vector>
 #include <string>
 #include <vikit/math_utils.h>
@@ -28,9 +30,33 @@
 #include <opencv2/opencv.hpp>
 #include <sophus/se3.h>
 #include <iostream>
+#include <dirent.h>
 #include "test_utils.h"
 
 namespace svo {
+
+std::vector <std::string> read_directory( const std::string& path = std::string() )
+  {
+  std::vector <std::string> result;
+  dirent* de;
+  DIR* dp;
+  errno = 0;
+  dp = opendir( path.empty() ? "." : path.c_str() );
+  if (dp)
+    {
+    while (true)
+      {
+      errno = 0;
+      de = readdir( dp );
+      if (de == NULL) break;
+      result.push_back( std::string( de->d_name ) );
+      }
+    closedir( dp );
+    std::sort( result.begin(), result.end() );
+    }
+  return result;
+  }
+
 
 class BenchmarkNode
 {
@@ -40,12 +66,33 @@ class BenchmarkNode
 public:
   BenchmarkNode();
   ~BenchmarkNode();
-  void runFromFolder();
+  void runFromFolder( std::string folderPath);
 };
 
 BenchmarkNode::BenchmarkNode()
 {
-  cam_ = new vk::PinholeCamera(752, 480, 315.5, 315.5, 376.0, 240.0);
+  /*
+  //Test office data
+  cam_ = new vk::PinholeCamera(
+      752, 480,         //image width, height
+      315.5, 315.5,     //focal length
+      376.0, 240.0      //principal point
+    );
+
+  //UniFarm
+  cam_ = new vk::PinholeCamera(
+      639, 480,       	//image width, height
+      315.5, 315.5,     //focal length
+      376.0, 240.0      //principal point
+    );
+
+	*/
+  cam_ = new vk::PinholeCamera(752, 480, 315.5, 315.5, 376.0, 240.0); //Grass
+  //cam_ = new vk::PinholeCamera(640, 480, 819.5, 819.5, 328.8, 233.0);
+
+
+  
+
   vo_ = new svo::FrameHandlerMono(cam_);
   vo_->start();
 }
@@ -56,43 +103,64 @@ BenchmarkNode::~BenchmarkNode()
   delete cam_;
 }
 
-void BenchmarkNode::runFromFolder()
+void BenchmarkNode::runFromFolder(std::string folderPath)
 {
-  for(int img_id = 2; img_id < 188; ++img_id)
-  {
-    // load image
-    std::stringstream ss;
-    ss << svo::test_utils::getDatasetDir() << "/sin2_tex2_h1_v8_d/img/frame_"
-       << std::setw( 6 ) << std::setfill( '0' ) << img_id << "_0.png";
-    if(img_id == 2)
-      std::cout << "reading image " << ss.str() << std::endl;
-    cv::Mat img(cv::imread(ss.str().c_str(), 0));
-    assert(!img.empty());
+	//get the files in the directory
+	std::vector <std::string> fileList;	
+	fileList = read_directory( folderPath );
+	
+  
+	int cI, nonValidKeyPts;
+	cI=0;
+	nonValidKeyPts = 0;
+	bool empty_key_pts;
 
-    // process frame
-    vo_->addImage(img, 0.01*img_id);
+  for(std::vector<std::string>::iterator it = fileList.begin(); it != fileList.end(); ++it)
+  {
+	cI++;  
+  
+	// load image
+	cv::Mat img(cv::imread(folderPath + "/" + string(*it), 0));
+    if( img.empty()) {
+		std::cerr << "[WARN]\t" << *it << " empty, skipping\n";		
+		continue;
+	}
+
+	// process frame
+    vo_->addImage(img, 0.01*cI);
 
     // display tracking quality
     if(vo_->lastFrame() != NULL)
     {
-    	std::cout << "Frame-Id: " << vo_->lastFrame()->id_ << " \t"
-                  << "#Features: " << vo_->lastNumObservations() << " \t"
-                  << "Proc. Time: " << vo_->lastProcessingTime()*1000 << "ms \n";
+    	std::cout << *it << ","
+    			  << vo_->lastFrame()->id_ << ","
+                  << vo_->lastNumObservations() << ","
+                  << vo_->lastFrame()->isKeyframe() << ","
+                  << vo_->lastProcessingTime()*1000 << "\n";
 
     	// access the pose of the camera via vo_->lastFrame()->T_f_w_.
-    }
-  }
-}
+    }	
 
+  }	
+	
+}
 } // namespace svo
 
 int main(int argc, char** argv)
 {
   {
-    svo::BenchmarkNode benchmark;
-    benchmark.runFromFolder();
+	
+	if( argc < 2 ) {
+		std::cout << "Usage: " << argv[0] << " <image_path>\n";
+		return -1;
+	}
+    
+	std::cout << "Image,Frame-Id,#Features,KeyFrame,Proc. Time\n";
+
+	svo::BenchmarkNode benchmark;
+    benchmark.runFromFolder(argv[1]);
   }
-  printf("BenchmarkNode finished.\n");
+  //printf("BenchmarkNode finished.\n");
   return 0;
 }
 

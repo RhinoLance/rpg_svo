@@ -31,7 +31,12 @@ class MatcherTest {
  public:
   MatcherTest()
   {
-    cam_ = new vk::PinholeCamera(752, 480, 315.5, 315.5, 376.0, 240.0);
+    
+    cam_ = new vk::PinholeCamera(
+      752, 480,         //image width, height
+      315.5, 315.5,     //focal length
+      376.0, 240.0      //principal point
+    );
 
     // load images
     std::string dataset_dir(svo::test_utils::getDatasetDir() + "/sin2_tex2_h1_v8_d");
