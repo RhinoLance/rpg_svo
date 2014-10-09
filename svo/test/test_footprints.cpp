@@ -67,6 +67,7 @@ public:
   BenchmarkNode();
   ~BenchmarkNode();
   void runFromFolder( std::string folderPath);
+  void printCoords( Feature* feat);
 };
 
 BenchmarkNode::BenchmarkNode()
@@ -80,12 +81,10 @@ BenchmarkNode::BenchmarkNode()
     );
   */
 
-  //UniFarm
-  cam_ = new vk::PinholeCamera(
-      639, 480,       	//image width, height
-      315.5, 315.5,     //focal length
-      376.0, 240.0      //principal point
-    );
+  //cam_ = new vk::PinholeCamera(752, 480, 315.5, 315.5, 376.0, 240.0); ///Grass
+  //cam_ = new vk::PinholeCamera(639, 480, 315.5, 315.5, 376.0, 240.0); //UniFarm
+  cam_ = new vk::PinholeCamera(640, 480, 819.5, 819.5, 328.8, 233.0); //chameleon
+  
   vo_ = new svo::FrameHandlerMono(cam_);
   vo_->start();
 }
@@ -94,6 +93,13 @@ BenchmarkNode::~BenchmarkNode()
 {
   delete vo_;
   delete cam_;
+}
+
+void BenchmarkNode::printCoords(Feature* feat){
+	std::cout << "\t\t\t\t\t[" 
+		<< feat->point->pos_.x() << ", "
+		<< feat->point->pos_.y() 
+		<< "]\n";
 }
 
 void BenchmarkNode::runFromFolder(std::string folderPath)
@@ -156,13 +162,24 @@ void BenchmarkNode::runFromFolder(std::string folderPath)
 			
 		std::cout << "\t\t{ \"type\": \"Feature\",\n"
 			<< "\t\t\t\"properties\":{\n"
-			<< "\t\t\t\t\"frameId\": \"" << vo_->lastFrame()->id_ << "\",\n"
-			<< "\t\t\t\t\"isKeyframe\": \"" << vo_->lastFrame()->isKeyframe() << "\"\n"
+			<< "\t\t\t\t\"frameId\": " << vo_->lastFrame()->id_ << ",\n"
+			<< "\t\t\t\t\"isKeyframe\": " << vo_->lastFrame()->isKeyframe() << "\n"
 			<< "\t\t\t},\n"
 			<< "\t\t\t\"geometry\":{\n"
 			<< "\t\t\t\t\"type\": \"Polygon\",\n"
 			<< "\t\t\t\t\"coordinates\": [[\n";
+
+		printCoords(vo_->lastFrame()->key_pts_[1]);
+		std::cout << ",";
+		printCoords(vo_->lastFrame()->key_pts_[2]);
+		std::cout << ",";
+		printCoords(vo_->lastFrame()->key_pts_[3]);
+		std::cout << ",";
+		printCoords(vo_->lastFrame()->key_pts_[4]);
+		std::cout << ",";
+		printCoords(vo_->lastFrame()->key_pts_[1]);
 //						
+		/*
 		for( size_t keyPtInx=1; keyPtInx<vo_->lastFrame()->key_pts_.size(); keyPtInx++ ) {
 			
 			if(vo_->lastFrame()->key_pts_[keyPtInx] == NULL){
@@ -175,18 +192,16 @@ void BenchmarkNode::runFromFolder(std::string folderPath)
 			std::cout << keyPtInx << " point " << vo_->lastFrame()->key_pts_[keyPtInx]->point << "\n";
 			std::cout << keyPtInx << ".x " << vo_->lastFrame()->key_pts_[keyPtInx]->point->pos_.x() << "\n";
 			std::cout << keyPtInx << ".y " << vo_->lastFrame()->key_pts_[keyPtInx]->point->pos_.y() << "\n";
-*/
+/
+			
 			std::cout << "\t\t\t\t\t[" 
 				<< vo_->lastFrame()->key_pts_[keyPtInx]->point->pos_.x() << ", "
 				<< vo_->lastFrame()->key_pts_[keyPtInx]->point->pos_.y() 
 				<< "],\n";
-		}
+
+		}*/
 //
-		std::cout << "\t\t\t\t\t[" 
-			<< vo_->lastFrame()->key_pts_[0]->point->pos_.x() << ", "
-			<< vo_->lastFrame()->key_pts_[0]->point->pos_.y() 
-			<< "]\n"
-			<< "\t\t\t\t]]\n"
+		std::cout << "\t\t\t\t]]\n"
 			<< "\t\t\t}\n"
 			<< "\t\t},\n";
 				
@@ -206,12 +221,28 @@ int main(int argc, char** argv)
   {
 	
 	if( argc < 2 ) {
-		std::cout << "Usage: " << argv[0] << " <image_path>\n";
+		std::cout << "Usage: " << argv[0] << " <image_path> [cycles]\n";
 		return -1;
 	}
     
+	//Get the number of cycles to run.
+	int cycles;
+	if( argc < 3 ){
+    	cycles = 1;
+    }
+    else{
+	    std::istringstream ssc(argv[2]);
+		if (!(ssc >> cycles)) {
+	    	cycles = 1;
+	    }
+	}
+
 	svo::BenchmarkNode benchmark;
-    benchmark.runFromFolder(argv[1]);
+	for( int runs=0; runs<cycles; runs++){
+		benchmark.runFromFolder(argv[1]);
+	}
+	
+    
   }
   //printf("BenchmarkNode finished.\n");
   return 0;

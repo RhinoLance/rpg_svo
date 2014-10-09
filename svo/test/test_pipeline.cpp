@@ -66,7 +66,7 @@ class BenchmarkNode
 public:
   BenchmarkNode();
   ~BenchmarkNode();
-  void runFromFolder( std::string folderPath);
+  void runFromFolder( std::string folderPath, int skip);
 };
 
 BenchmarkNode::BenchmarkNode()
@@ -88,10 +88,7 @@ BenchmarkNode::BenchmarkNode()
 
 	*/
   cam_ = new vk::PinholeCamera(752, 480, 315.5, 315.5, 376.0, 240.0); //Grass
-  //cam_ = new vk::PinholeCamera(640, 480, 819.5, 819.5, 328.8, 233.0);
-
-
-  
+  //cam_ = new vk::PinholeCamera(640, 480, 819.5, 819.5, 328.8, 233.0); //chameleon
 
   vo_ = new svo::FrameHandlerMono(cam_);
   vo_->start();
@@ -103,7 +100,7 @@ BenchmarkNode::~BenchmarkNode()
   delete cam_;
 }
 
-void BenchmarkNode::runFromFolder(std::string folderPath)
+void BenchmarkNode::runFromFolder(std::string folderPath, int skip)
 {
 	//get the files in the directory
 	std::vector <std::string> fileList;	
@@ -117,7 +114,12 @@ void BenchmarkNode::runFromFolder(std::string folderPath)
 
   for(std::vector<std::string>::iterator it = fileList.begin(); it != fileList.end(); ++it)
   {
-	cI++;  
+	cI++;
+
+	//Skip rows to start later in the dataset if required
+	if( cI < skip){
+		continue;
+	}
   
 	// load image
 	cv::Mat img(cv::imread(folderPath + "/" + string(*it), 0));
@@ -151,14 +153,21 @@ int main(int argc, char** argv)
   {
 	
 	if( argc < 2 ) {
-		std::cout << "Usage: " << argv[0] << " <image_path>\n";
+		std::cout << "Usage: " << argv[0] << " <image_path> [skip]\n";
 		return -1;
 	}
+
+	//Get the skipper command line argument.
+	std::istringstream ssn(argv[2]);
+	int skip;
+	if (!(ssn >> skip)) {
+    	skip = 0;
+    }
     
 	std::cout << "Image,Frame-Id,#Features,KeyFrame,Proc. Time\n";
 
 	svo::BenchmarkNode benchmark;
-    benchmark.runFromFolder(argv[1]);
+    benchmark.runFromFolder(argv[1], skip);
   }
   //printf("BenchmarkNode finished.\n");
   return 0;

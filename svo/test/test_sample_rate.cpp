@@ -42,18 +42,18 @@ namespace svo {
 		DIR* dp;
 		errno = 0;
 		dp = opendir( path.empty() ? "." : path.c_str() );
-		if (dp)
-			{
-			while (true)
-				{
+		
+		if (dp) {
+			while (true) {
 				errno = 0;
 				de = readdir( dp );
 				if (de == NULL) break;
 				result.push_back( std::string( de->d_name ) );
-				}
+			}
 			closedir( dp );
 			std::sort( result.begin(), result.end() );
-			}
+		}
+		
 		return result;
 
 	} //read_directory
@@ -73,7 +73,9 @@ namespace svo {
 
 	BenchmarkNode::BenchmarkNode()
 	{
-		cam_ = new vk::PinholeCamera(752, 480, 315.5, 315.5, 376.0, 240.0);
+		cam_ = new vk::PinholeCamera(752, 480, 315.5, 315.5, 376.0, 240.0); ///Grass
+	    //cam_ = new vk::PinholeCamera(639, 480, 315.5, 315.5, 376.0, 240.0); //UniFarm
+	    //cam_ = new vk::PinholeCamera(640, 480, 819.5, 819.5, 328.8, 233.0); //chameleon
 		vo_ = new svo::FrameHandlerMono(cam_);
 		vo_->start();
 	}
@@ -99,11 +101,12 @@ namespace svo {
 		nonValidKeyPts = 0;
 		bool empty_key_pts;
 
-		std::cout << "Frame ID,# Features Tracked, Processing Time\n"; 
-
 		for(std::vector<std::string>::iterator it = fileList.begin(); it != fileList.end(); ++it) {
 
 			totalImageCount++;
+			
+			//Write the name for every image so that we can compare agaisnt other runs.
+			std::cout << "\n" << *it << ",";
 
 			//Manage the skipper so that we are only processing every n'th image
 			if( skipper > 1 ) {
@@ -121,7 +124,6 @@ namespace svo {
 			
 			//Skip empty images
 			if( img.empty()) {
-				std::cout << string(*it) << " empty, skipping\n";		
 				continue;
 			}
 
@@ -136,18 +138,17 @@ namespace svo {
 					processedImageCount++;
 				}
 
-				//Output as <FileName>, <FrameId>, <Num features tracked>, <Processing time (ms)>
-				/*
-				std::cout << string(*it) << ","
-					<< vo_->lastFrame()->id_ << ","
-	                << vo_->lastNumObservations() << "/" << vo_->lastFrame()->fts_.size() << "/" << vo_->lastFrame()->nObs() << ","
-	                << vo_->lastProcessingTime()*1000 << ","
-	                << "[" << vo_->lastFrame()->pos().x() << ", " << vo_->lastFrame()->pos().y() << ", " << vo_->lastFrame()->pos().z() << "]\n";
-	            */
+				
+                std::cout << vo_->lastFrame()->id_ << ","
+                  << vo_->lastNumObservations() << ","
+                  << vo_->lastFrame()->isKeyframe() << ","
+                  << vo_->lastProcessingTime()*1000;
 			}
+
 		}
 
-		std::cout << "Processed <total> <candidates> <succesfully processed> <success rate> " 
+		std::cout << "\n,,,,,, Total, Candidates, Succesfully processed, Success rate\n" 
+			<< ",,,,,,"
 			<< totalImageCount << ", " 
 			<< candidateImageCount << ", " 
 			<< processedImageCount << ", " 
@@ -173,7 +174,7 @@ int main(int argc, char** argv)
     	return -1;
     }
 
-	//Get the number of cycles to run.
+    //Get the number of cycles to run.
 	int cycles;
 	if( argc < 4 ){
     	cycles = 1;
@@ -185,6 +186,7 @@ int main(int argc, char** argv)
 
 	svo::BenchmarkNode benchmark;
 	for( int runs=0; runs<cycles; runs++){
+		std::cout << "Image,Frame-Id,#Features,KeyFrame,Proc. Time\n";
 		benchmark.processImagesInFolder(argv[1], nth);
 	}
 
