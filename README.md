@@ -1,3 +1,7 @@
+Purpose for this Fork
+=======================
+This fork is in support of an honours thesis evaluating the use of SVO to analyse SfM datasets in order to determine ground coverage in near real time.
+
 SVO
 ===
 
