@@ -66,7 +66,7 @@ class BenchmarkNode
 public:
   BenchmarkNode();
   ~BenchmarkNode();
-  void runFromFolder( std::string folderPath);
+  void runFromFolder( std::string folderPath, int skip);
   void printCoords( Feature* feat);
 };
 
@@ -102,7 +102,7 @@ void BenchmarkNode::printCoords(Feature* feat){
 		<< "]\n";
 }
 
-void BenchmarkNode::runFromFolder(std::string folderPath)
+void BenchmarkNode::runFromFolder(std::string folderPath, int skip)
 {
 	std::cout << "{ \"type\": \"FeatureCollection\",\n"
     			<< "\t\"features\": [\n";  
@@ -117,14 +117,19 @@ void BenchmarkNode::runFromFolder(std::string folderPath)
 	nonValidKeyPts = 0;
 	bool empty_key_pts;
 
-  for(std::vector<std::string>::iterator it = fileList.begin(); it != fileList.end(); ++it)
+  for(std::vector<std::string>::iterator fn = fileList.begin(); fn != fileList.end(); ++fn)
   {
 	cI++;  
   
+  	//Skip rows to start later in the dataset if required
+	if( cI < skip){
+		continue;
+	}
+
 	// load image
 	//std::cout << "Loading " << cI << " " << *it;    
 	
-	cv::Mat img(cv::imread(folderPath + "/" + string(*it), 0));
+	cv::Mat img(cv::imread(folderPath + "/" + string(*fn), 0));
     if( img.empty()) {
 		//std::cout << "... empty, skipping\n";		
 		continue;
@@ -162,6 +167,7 @@ void BenchmarkNode::runFromFolder(std::string folderPath)
 			
 		std::cout << "\t\t{ \"type\": \"Feature\",\n"
 			<< "\t\t\t\"properties\":{\n"
+			<< "\t\t\t\t\"imageName\": \" << string(*fn) << "\",\n"
 			<< "\t\t\t\t\"frameId\": " << vo_->lastFrame()->id_ << ",\n"
 			<< "\t\t\t\t\"isKeyframe\": " << vo_->lastFrame()->isKeyframe() << "\n"
 			<< "\t\t\t},\n"
@@ -221,17 +227,24 @@ int main(int argc, char** argv)
   {
 	
 	if( argc < 2 ) {
-		std::cout << "Usage: " << argv[0] << " <image_path> [cycles]\n";
+		std::cout << "Usage: " << argv[0] << " <image_path> [skip] [cycles]\n";
 		return -1;
 	}
+
+	//Get the skipper command line argument.
+	std::istringstream ssn(argv[2]);
+	int skip;
+	if (!(ssn >> skip)) {
+    	skip = 0;
+    }
     
 	//Get the number of cycles to run.
 	int cycles;
-	if( argc < 3 ){
+	if( argc < 4 ){
     	cycles = 1;
     }
     else{
-	    std::istringstream ssc(argv[2]);
+	    std::istringstream ssc(argv[3]);
 		if (!(ssc >> cycles)) {
 	    	cycles = 1;
 	    }
@@ -239,9 +252,9 @@ int main(int argc, char** argv)
 
 	svo::BenchmarkNode benchmark;
 	for( int runs=0; runs<cycles; runs++){
-		benchmark.runFromFolder(argv[1]);
+		benchmark.runFromFolder(argv[1], skip);
 	}
-	
+
     
   }
   //printf("BenchmarkNode finished.\n");

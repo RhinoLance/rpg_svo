@@ -87,8 +87,8 @@ BenchmarkNode::BenchmarkNode()
     );
 
 	*/
-  cam_ = new vk::PinholeCamera(752, 480, 315.5, 315.5, 376.0, 240.0); //Grass
-  //cam_ = new vk::PinholeCamera(640, 480, 819.5, 819.5, 328.8, 233.0); //chameleon
+  //cam_ = new vk::PinholeCamera(752, 480, 315.5, 315.5, 376.0, 240.0); //Grass
+  cam_ = new vk::PinholeCamera(640, 480, 819.5, 819.5, 328.8, 233.0); //chameleon
 
   vo_ = new svo::FrameHandlerMono(cam_);
   vo_->start();
